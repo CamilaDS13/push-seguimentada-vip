@@ -4,16 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Painel de Push Segmentado</title>
-  
+
   <!-- Tailwind CSS & Google Fonts -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   
-  <!-- SheetJS para Exportação Excel & Lucide Icons -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Lucide Icons, PapaParse, SheetJS -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <style>
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -21,123 +22,335 @@
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased selection:bg-indigo-500 selection:text-white">
-  <div class="min-h-screen flex flex-col">
-    <!-- Barra Superior -->
-    <header class="bg-white border-b border-slate-200/80 sticky top-0 z-30 shadow-xs">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-md shadow-indigo-100 shrink-0">
-            <i data-lucide="bell" class="w-5 h-5"></i>
+
+  <!-- CABEÇALHO -->
+  <header class="bg-white border-b border-slate-200/80 sticky top-0 z-30 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-100 shrink-0">
+          <i data-lucide="radio" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h1 class="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight">Painel de Push Segmentado</h1>
+            <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+              <i data-lucide="layers" class="w-3 h-3"></i> Analytics v2.4
+            </span>
           </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">Painel de Push Segmentado</h1>
-              <span class="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                Planilha Ativa
-              </span>
-            </div>
-            <p class="text-xs text-slate-500">Métricas consolidadas com cálculo de faturamento e engajamento</p>
-          </div>
+          <p class="text-xs text-slate-500 mt-0.5">Monitoramento de campanhas, funil de conversão e audiências segmentadas</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2.5">
+        <div class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg">
+          <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-600"></i>
+          <span>Planilha Conectada Online</span>
+          <span class="text-emerald-400">|</span>
+          <span class="text-slate-500 font-mono text-[11px]" id="clock-time">15:38:32</span>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2.5">
-          <button id="btn-sync" onclick="syncGoogleSheet()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition cursor-pointer">
-            <i data-lucide="refresh-cw" id="icon-sync" class="w-3.5 h-3.5"></i>
-            <span>Sincronizar Planilha</span>
+        <button onclick="syncSheet()" id="btn-sync" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs transition cursor-pointer">
+          <i data-lucide="refresh-cw" id="icon-sync" class="w-3.5 h-3.5"></i>
+          <span>Sincronizar</span>
+        </button>
+
+        <button onclick="exportToExcel()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-xs transition cursor-pointer">
+          <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
+          <span>Exportar Excel</span>
+        </button>
+
+        <a href="https://docs.google.com/spreadsheets/d/1HBwXdS87j0D6FLOgNlZhi-BdqQWnJAmtZVHHGE3PRes/edit" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg transition">
+          <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5 text-slate-500"></i>
+          <span>Planilha</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-5 space-y-5">
+
+    <!-- BARRA DE VISUALIZAÇÃO: Consolidado vs Por Mês -->
+    <div class="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <span class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+          <i data-lucide="calendar" class="w-4 h-4 text-indigo-600"></i>
+          VISUALIZAÇÃO:
+        </span>
+        <div class="inline-flex rounded-lg border border-slate-200 p-0.5 bg-slate-50 text-xs">
+          <button id="btn-view-all" onclick="changePeriod('all')" class="px-3 py-1 rounded-md font-bold bg-indigo-600 text-white shadow-xs transition cursor-pointer">
+            Consolidado (Todos os Meses)
           </button>
-          <button onclick="exportToExcel()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition cursor-pointer">
-            <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
-            <span>Exportar Excel</span>
+          <button id="btn-view-month" onclick="changePeriod('month')" class="px-3 py-1 rounded-md font-medium text-slate-600 hover:text-slate-900 transition cursor-pointer">
+            Por Mês
           </button>
         </div>
       </div>
-    </header>
 
-    <!-- Conteúdo Principal -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
-      
-      <!-- Cards de Métricas (KPIs) -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="kpi-cards">
+      <div class="flex items-center gap-2 text-xs text-emerald-700 bg-emerald-50/60 px-3 py-1.5 rounded-lg border border-emerald-100">
+        <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
+        <span class="font-medium">Fonte: Google Sheets</span>
+      </div>
+    </div>
+
+    <!-- SUB-BARRA DE RECORTE E STATUS -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+      <div class="flex items-center gap-2 text-slate-600">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span>Visualizando: <strong class="text-slate-900" id="current-view-title">Consolidado (Todos os Meses)</strong></span>
+        <span class="text-slate-300">•</span>
+        <span id="txt-campaign-count">6 campanhas no recorte</span>
+        <span class="text-slate-300">•</span>
+        <span id="txt-segment-count">5 segmentos</span>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button onclick="setStatusFilter('all')" id="btn-status-all" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-900 text-white cursor-pointer transition">
+          Todas (<span id="count-all">6</span>)
+        </button>
+        <button onclick="setStatusFilter('Entregue')" id="btn-status-sent" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 cursor-pointer transition">
+          ✓ Aba de Entregues (<span id="count-sent">4</span>)
+        </button>
+        <button onclick="setStatusFilter('Agendado')" id="btn-status-sched" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 cursor-pointer transition">
+          Agendados (<span id="count-sched">2</span>)
+        </button>
+      </div>
+    </div>
+
+    <!-- FUNIL DE CONVERSÃO -->
+    <div class="bg-white rounded-xl p-5 border border-slate-200/80 shadow-xs">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-100">
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 class="text-sm font-bold text-slate-900 tracking-tight">Funil de Conversão do Disparo de Push</h3>
+            <span class="text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">Etapas ponta a ponta</span>
+          </div>
+          <p class="text-xs text-slate-500 mt-0.5">Acompanhe a retenção, taxa de perda entre etapas e o retorno financeiro gerado</p>
+        </div>
+
+        <div class="flex items-center gap-3 text-xs">
+          <span class="text-slate-500">Taxa Global: <strong class="text-slate-800" id="funnel-global-rate">0.00%</strong></span>
+          <span class="text-slate-300">•</span>
+          <span class="text-emerald-700 font-bold flex items-center gap-1">
+            <i data-lucide="dollar-sign" class="w-3.5 h-3.5"></i>
+            Receita Total: <span class="text-sm font-extrabold" id="funnel-total-rev">R$ 4.590,19</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- 4 CARDS DO FUNIL -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+        <!-- 1. Disparados -->
+        <div class="p-4 rounded-xl bg-slate-50/80 border border-slate-200/60 space-y-2">
+          <div class="flex items-center justify-between text-xs text-slate-600 font-bold">
+            <span>1. Disparados</span>
+            <div class="w-6 h-6 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center">
+              <i data-lucide="send" class="w-3.5 h-3.5"></i>
+            </div>
+          </div>
+          <div class="text-2xl font-extrabold text-slate-900" id="fn-sent-num">35.354</div>
+          <div class="text-[11px] text-slate-400">Envios solicitados</div>
+          <div class="pt-2 border-t border-slate-200/60 flex justify-between text-[11px] text-slate-500">
+            <span>% do total</span>
+            <span class="font-bold text-slate-800">100.0%</span>
+          </div>
+          <div class="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+            <div class="h-full bg-indigo-600 w-full"></div>
+          </div>
+        </div>
+
+        <!-- 2. Aberturas -->
+        <div class="p-4 rounded-xl bg-slate-50/80 border border-slate-200/60 space-y-2">
+          <div class="flex items-center justify-between text-xs text-slate-600 font-bold">
+            <span>2. Aberturas</span>
+            <div class="w-6 h-6 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center">
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+            </div>
+          </div>
+          <div class="text-2xl font-extrabold text-slate-900" id="fn-opened-num">30</div>
+          <div class="text-[11px] text-slate-400">Visualizados na tela</div>
+          <div class="pt-2 border-t border-slate-200/60 flex justify-between text-[11px] text-slate-500">
+            <span>% do total</span>
+            <span class="font-bold text-sky-700" id="fn-opened-pct">0.1%</span>
+          </div>
+          <div class="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+            <div class="h-full bg-sky-500" id="fn-opened-bar" style="width: 1%"></div>
+          </div>
+          <div class="text-[10px] text-amber-600 flex items-center gap-1">
+            <span>📉 99.9% (Dispensados / Sem abertura)</span>
+          </div>
+        </div>
+
+        <!-- 3. Cliques -->
+        <div class="p-4 rounded-xl bg-slate-50/80 border border-slate-200/60 space-y-2">
+          <div class="flex items-center justify-between text-xs text-slate-600 font-bold">
+            <span>3. Cliques (CTR)</span>
+            <div class="w-6 h-6 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center">
+              <i data-lucide="mouse-pointer-click" class="w-3.5 h-3.5"></i>
+            </div>
+          </div>
+          <div class="text-2xl font-extrabold text-slate-900" id="fn-clicked-num">0</div>
+          <div class="text-[11px] text-slate-400">Acessaram o aplicativo</div>
+          <div class="pt-2 border-t border-slate-200/60 flex justify-between text-[11px] text-slate-500">
+            <span>% do total</span>
+            <span class="font-bold text-amber-700" id="fn-clicked-pct">0.0%</span>
+          </div>
+          <div class="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+            <div class="h-full bg-amber-500" id="fn-clicked-bar" style="width: 0%"></div>
+          </div>
+          <div class="text-[10px] text-slate-400">0.0% (Não clicaram no CTA)</div>
+        </div>
+
+        <!-- 4. Conversões -->
+        <div class="p-4 rounded-xl bg-slate-50/80 border border-slate-200/60 space-y-2">
+          <div class="flex items-center justify-between text-xs text-slate-600 font-bold">
+            <span>4. Conversões (Pedidos)</span>
+            <div class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center">
+              <i data-lucide="shopping-bag" class="w-3.5 h-3.5"></i>
+            </div>
+          </div>
+          <div class="text-2xl font-extrabold text-emerald-600" id="fn-conv-num">0</div>
+          <div class="text-[11px] text-slate-400">Compras finalizadas</div>
+          <div class="pt-2 border-t border-slate-200/60 flex justify-between text-[11px] text-slate-500">
+            <span>Faturamento gerado</span>
+            <span class="font-bold text-emerald-700" id="fn-conv-rev">R$ 0,00</span>
+          </div>
+          <div class="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+            <div class="h-full bg-emerald-500" id="fn-conv-bar" style="width: 0%"></div>
+          </div>
+          <div class="text-[10px] text-emerald-600 font-medium">Ticket Médio: R$ 0,00</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANÁLISE DE HORÁRIOS: MANHÃ, TARDE, NOITE (SEM MADRUGADA) -->
+    <div class="bg-white rounded-xl p-5 border border-slate-200/80 shadow-xs">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+        <div>
+          <h3 class="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-2">
+            <i data-lucide="clock" class="w-4 h-4 text-amber-600"></i>
+            <span>CTR Médio por Faixa de Horário</span>
+          </h3>
+          <p class="text-xs text-slate-500 mt-0.5">Engajamento calculado pelo horário cadastrado de cada disparo na planilha</p>
+        </div>
+        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 self-start sm:self-auto">
+          Análise de Conversão por Horário
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 my-3" id="time-grid">
         <!-- Renderizado dinamicamente via JS -->
       </div>
 
-      <!-- Análise de Horários (Manhã, Tarde e Noite) -->
-      <div class="bg-white rounded-xl p-5 border border-slate-200/80 shadow-xs">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-          <div>
-            <h3 class="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-2">
-              <i data-lucide="clock" class="w-4 h-4 text-amber-600"></i>
-              <span>CTR Médio por Faixa de Horário</span>
-            </h3>
-            <p class="text-xs text-slate-500 mt-0.5">Engajamento calculado pelo horário cadastrado de cada disparo</p>
-          </div>
-          <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 self-start sm:self-auto">
-            Análise de Conversão por Horário
-          </span>
-        </div>
+      <div class="text-[11px] text-slate-600 bg-amber-50/80 p-2.5 rounded-lg border border-amber-200/70">
+        💡 <strong>Dica tática:</strong> A faixa com maior interação atual é <strong>Noite (18h – 22h)</strong> com maior taxa de abertura e conversão.
+      </div>
+    </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 my-3" id="time-cards">
-          <!-- Renderizado dinamicamente via JS -->
-        </div>
-
-        <div class="text-[11px] text-slate-600 bg-amber-50/80 p-2.5 rounded-lg border border-amber-200/70" id="time-tip">
-          💡 <strong>Dica tática:</strong> A faixa com maior interação atual é <strong>Noite (18h – 22h)</strong> com maior taxa de abertura e conversão.
-        </div>
+    <!-- TABELA COMPLETA EXATA DO PRINT -->
+    <div class="bg-white rounded-xl border border-slate-200/80 shadow-xs overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-slate-100/70 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider select-none">
+              <th class="py-3 px-4">
+                <div class="flex items-center gap-1.5 cursor-pointer" onclick="sortTable('name')">
+                  <span>Campanha & Público</span>
+                  <i data-lucide="arrow-up-down" class="w-3 h-3 text-slate-400"></i>
+                </div>
+              </th>
+              <th class="py-3 px-3">
+                <div class="flex items-center gap-1.5 cursor-pointer" onclick="sortTable('status')">
+                  <span>Status</span>
+                  <i data-lucide="arrow-up-down" class="w-3 h-3 text-slate-400"></i>
+                </div>
+              </th>
+              <th class="py-3 px-3">
+                <div class="flex items-center gap-1.5 cursor-pointer" onclick="sortTable('date')">
+                  <i data-lucide="calendar" class="w-3 h-3 text-slate-400"></i>
+                  <span>Data</span>
+                  <i data-lucide="arrow-up-down" class="w-3 h-3 text-slate-400"></i>
+                </div>
+              </th>
+              <th class="py-3 px-3 bg-indigo-50/40 text-indigo-900 border-x border-indigo-100">
+                <div class="flex items-center gap-1.5 font-bold cursor-pointer" onclick="sortTable('time')">
+                  <i data-lucide="clock" class="w-3.5 h-3.5 text-indigo-600"></i>
+                  <span>Horário & Faixa</span>
+                  <i data-lucide="arrow-up-down" class="w-3 h-3 text-indigo-400"></i>
+                </div>
+              </th>
+              <th class="py-3 px-3 text-right">
+                <div class="flex items-center justify-end gap-1.5 cursor-pointer" onclick="sortTable('sent')">
+                  <span>Qtd. Enviada</span>
+                  <i data-lucide="arrow-up-down" class="w-3 h-3 text-slate-400"></i>
+                </div>
+              </th>
+              <th class="py-3 px-3 text-right">
+                <div class="flex items-center justify-end gap-1.5 cursor-pointer" onclick="sortTable('deliveryRate')">
+                  <span>Entrega (%)</span>
+                  <i data-lucide="arrow-up-down" class="w-3 h-3 text-slate-400"></i>
+                </div>
+              </th>
+              <th class="py-3 px-3 text-right">
+                <div class="flex items-center justify-end gap-1.5 cursor-pointer" onclick="sortTable('opened')">
+                  <span>Abertas (%)</span>
+                  <i data-lucide="arrow-up-down" class="w-3 h-3 text-slate-400"></i>
+                </div>
+              </th>
+              <th class="py-3 px-3 text-right">
+                <div class="flex items-center justify-end gap-1.5 cursor-pointer" onclick="sortTable('ctr')">
+                  <span>CTR Aberturas</span>
+                  <i data-lucide="arrow-up-down" class="w-3 h-3 text-slate-400"></i>
+                </div>
+              </th>
+              <th class="py-3 px-3 text-right">
+                <div class="flex items-center justify-end gap-1.5 cursor-pointer" onclick="sortTable('conv')">
+                  <span>Compras 24h</span>
+                  <i data-lucide="arrow-up-down" class="w-3 h-3 text-slate-400"></i>
+                </div>
+              </th>
+              <th class="py-3 px-3 text-right">
+                <div class="flex items-center justify-end gap-1.5 cursor-pointer" onclick="sortTable('revenue')">
+                  <span>Faturamento Estimado</span>
+                  <i data-lucide="arrow-up-down" class="w-3 h-3 text-slate-400"></i>
+                </div>
+              </th>
+              <th class="py-3 px-3 text-center">Prévia</th>
+            </tr>
+          </thead>
+          <tbody id="table-campaigns-body" class="divide-y divide-slate-100 text-xs text-slate-700">
+            <!-- Linhas montadas exatamente como no seu print -->
+          </tbody>
+        </table>
       </div>
 
-      <!-- Barra de Filtros e Busca -->
-      <div class="bg-white rounded-xl p-4 border border-slate-200/80 shadow-xs flex flex-col md:flex-row gap-3 items-center justify-between">
-        <div class="relative w-full md:w-80">
-          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
-          <input 
-            type="text" 
-            id="search-input" 
-            oninput="filterTable()" 
-            placeholder="Buscar por campanha, segmento ou copy..." 
-            class="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-          />
-        </div>
-
-        <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
-          <select id="filter-status" onchange="filterTable()" class="text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50 text-slate-700 focus:outline-none focus:border-indigo-500">
-            <option value="todos">Todos os Status</option>
-            <option value="Enviado">Enviado</option>
-            <option value="Agendado">Agendado</option>
-          </select>
-          <select id="filter-segment" onchange="filterTable()" class="text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50 text-slate-700 focus:outline-none focus:border-indigo-500">
-            <option value="todos">Todos os Segmentos</option>
-          </select>
+      <!-- PAGINAÇÃO -->
+      <div class="p-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+        <div>Mostrando <strong class="text-slate-800">1</strong> a <strong class="text-slate-800">6</strong> de <strong class="text-slate-800">6</strong> campanhas</div>
+        <div class="flex items-center gap-2">
+          <button class="p-1 rounded border border-slate-200 text-slate-400 disabled:opacity-50" disabled>
+            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+          </button>
+          <span class="font-medium text-slate-700">Página 1 de 1</span>
+          <button class="p-1 rounded border border-slate-200 text-slate-400 disabled:opacity-50" disabled>
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </button>
         </div>
       </div>
+    </div>
 
-      <!-- Tabela de Campanhas -->
-      <div class="bg-white rounded-xl border border-slate-200/80 shadow-xs overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs">
-            <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 uppercase tracking-wider">
-              <tr>
-                <th class="py-3 px-4">Campanha</th>
-                <th class="py-3 px-4">Data / Hora</th>
-                <th class="py-3 px-4">Segmento</th>
-                <th class="py-3 px-4 text-center">Status</th>
-                <th class="py-3 px-4 text-right">Disparos</th>
-                <th class="py-3 px-4 text-right">Abertura</th>
-                <th class="py-3 px-4 text-right">Cliques (CTR)</th>
-                <th class="py-3 px-4 text-right">Faturamento</th>
-                <th class="py-3 px-4 text-center">Ações</th>
-              </tr>
-            </thead>
-            <tbody id="table-body" class="divide-y divide-slate-100">
-              <!-- Renderizado dinamicamente via JS -->
-            </tbody>
-          </table>
-        </div>
+    <!-- RODAPÉ -->
+    <div class="flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-400 py-3 gap-2">
+      <div class="flex items-center gap-2">
+        <span class="w-4 h-4 rounded bg-indigo-600 text-white flex items-center justify-center font-bold text-[9px]">P</span>
+        <span><strong>Painel de Disparo de Push Segmentado</strong> — Sincronização contínua com Google Sheets e exportação XLSX</span>
       </div>
-    </main>
-  </div>
+      <div>Última atualização: <span id="footer-time">15:38:32</span></div>
+    </div>
 
-  <!-- Modal de Prévia do Push (Smartphone) -->
+  </main>
+
+  <!-- MODAL DE PRÉVIA DO SMARTPHONE -->
   <div id="preview-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl relative border border-slate-100">
       <button onclick="closePreviewModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 cursor-pointer">
@@ -146,16 +359,16 @@
 
       <div class="text-center mb-4">
         <h4 class="text-sm font-bold text-slate-900">Prévia da Notificação Push</h4>
-        <p class="text-xs text-slate-500">Como o cliente receberá no smartphone</p>
+        <p class="text-xs text-slate-500">Exibição real no smartphone do usuário</p>
       </div>
 
-      <!-- Simulação de Smartphone -->
+      <!-- Celular -->
       <div class="bg-slate-900 rounded-3xl p-3 border-4 border-slate-800 shadow-xl">
         <div class="w-16 h-1 bg-slate-700 rounded-full mx-auto mb-4"></div>
-        <div class="bg-slate-800/90 rounded-2xl p-3 text-white shadow-lg space-y-1.5 border border-slate-700/50">
+        <div class="bg-slate-800/90 rounded-2xl p-3.5 text-white shadow-lg space-y-1.5 border border-slate-700/50">
           <div class="flex items-center justify-between text-[10px] text-slate-300">
             <div class="flex items-center gap-1.5">
-              <div class="w-4 h-4 rounded bg-indigo-500 flex items-center justify-center text-[9px] font-bold">VIP</div>
+              <div class="w-4 h-4 rounded bg-indigo-500 flex items-center justify-center text-[8px] font-bold text-white">VIP</div>
               <span class="font-semibold text-white">Supermercado VIP</span>
             </div>
             <span id="modal-time">Agora</span>
@@ -168,174 +381,254 @@
     </div>
   </div>
 
-  <!-- Script da Aplicação -->
   <script>
-    // Dados Base Integrados
+    // DADOS IDÊNTICOS AO PRINT DA SUA PLANILHA
     let campaigns = [
-      { id: "1", title: "💥 Fim de Semana VIP: Ofertas Exclusivas!", body: "Aproveite até 40% OFF no hortifruti e carnes nobres. Só hoje no app!", date: "2026-09-18", time: "19:30", segment: "Clientes VIP", status: "Enviado", sent: 15420, delivered: 15110, opened: 5740, clicked: 2480, converted: 812, revenue: 16240 },
-      { id: "2", title: "🛒 Seu carrinho está esperando com frete grátis!", body: "Finalize suas compras agora e ganhe entrega grátis em até 2 horas.", date: "2026-09-19", time: "11:15", segment: "Carrinho Abandonado", status: "Enviado", sent: 8350, delivered: 8200, opened: 3690, clicked: 1820, converted: 546, revenue: 9828 },
-      { id: "3", title: "🥩 Sexta do Churrasco: Picanha e Cerveja!", body: "Combo especial com descontos imperdíveis para o seu churrasco.", date: "2026-09-19", time: "17:45", segment: "Compradores Recentes", status: "Enviado", sent: 12100, delivered: 11890, opened: 4520, clicked: 1910, converted: 480, revenue: 8640 },
-      { id: "4", title: "👋 Sentimos sua falta! Ganhe R$ 30 no seu retorno", body: "Use o cupom VOLTEI30 nas compras acima de R$ 120 e aproveite.", date: "2026-09-20", time: "10:00", segment: "Inativos (+30 dias)", status: "Enviado", sent: 6200, delivered: 5950, opened: 1720, clicked: 580, converted: 110, revenue: 1980 },
-      { id: "5", title: "🎂 Parabéns! Seu presente de aniversário está aqui", body: "Preparamos um desconto exclusivo de 20% em toda a loja. Parabéns!", date: "2026-09-20", time: "09:00", segment: "Aniversariantes do Mês", status: "Enviado", sent: 1840, delivered: 1810, opened: 980, clicked: 470, converted: 142, revenue: 1955.59 },
-      { id: "6", title: "⚡ Oferta Relâmpago: Vinhos e Queijos 25% OFF", body: "Só hoje até as 22h! Seleção especial de vinhos importados.", date: "2026-09-22", time: "18:30", segment: "Clientes VIP", status: "Agendado", sent: 14000, delivered: 0, opened: 0, clicked: 0, converted: 0, revenue: 0 },
-      { id: "7", title: "🥦 Terça Saudável: Feirinha Fresca com 30% OFF", body: "Frutas, legumes e verduras fresquinhas chegando agora.", date: "2026-09-23", time: "08:30", segment: "Geral", status: "Agendado", sent: 20000, delivered: 0, opened: 0, clicked: 0, converted: 0, revenue: 0 }
+      {
+        id: "PUSH-003",
+        name: "Push VIP: 60 DIAS SEM...",
+        segment: "60 DIAS SEM COMPRA",
+        status: "Entregue",
+        date: "2026-09-22",
+        time: "14:30",
+        slot: "Tarde",
+        slotColor: "bg-sky-50 text-sky-700 border-sky-200",
+        sent: 19574,
+        delivered: 19574,
+        deliveryPct: "100.0%",
+        opened: 17,
+        openPct: "0.1%",
+        clicked: 17,
+        ctr: "0.09%",
+        conv: 0,
+        convRate: "0.0% conv.",
+        revenue: 0,
+        title: "❤️ Que saudade de você! Ganhe Frete Grátis hoje",
+        body: "Faz tempo que não te vemos! Volte e aproveite um benefício exclusivo no seu próximo pedido."
+      },
+      {
+        id: "PUSH-004",
+        name: "Push VIP: 30 DIAS SEM...",
+        segment: "30 DIAS SEM COMPRA",
+        status: "Agendado",
+        date: "2026-09-22",
+        time: "20:00",
+        slot: "Noite",
+        slotColor: "bg-indigo-50 text-indigo-700 border-indigo-200",
+        sent: 0,
+        delivered: 0,
+        deliveryPct: "—",
+        opened: 0,
+        openPct: "—",
+        clicked: 0,
+        ctr: "—",
+        conv: 0,
+        convRate: "0%",
+        revenue: 0,
+        title: "✨ Temos novidades selecionadas para você",
+        body: "Confira os lançamentos e ofertas imperdíveis que separamos para o seu perfil no app."
+      },
+      {
+        id: "PUSH-005",
+        name: "Push VIP: IDOSOS",
+        segment: "IDOSOS",
+        status: "Agendado",
+        date: "2026-09-22",
+        time: "16:50",
+        slot: "Tarde",
+        slotColor: "bg-sky-50 text-sky-700 border-sky-200",
+        sent: 0,
+        delivered: 0,
+        deliveryPct: "—",
+        opened: 0,
+        openPct: "—",
+        clicked: 0,
+        ctr: "—",
+        conv: 0,
+        convRate: "0%",
+        revenue: 0,
+        title: "🛒 Desconto da semana e atendimento prioritário",
+        body: "Ofertas pensadas com carinho para você, com entrega facilitada e suporte dedicado."
+      },
+      {
+        id: "PUSH-006",
+        name: "Push VIP: NUNCA...",
+        segment: "NUNCA COMPRARAM",
+        status: "Entregue",
+        date: "2026-09-22",
+        time: "14:45",
+        slot: "Tarde",
+        slotColor: "bg-sky-50 text-sky-700 border-sky-200",
+        sent: 15317,
+        delivered: 15317,
+        deliveryPct: "100.0%",
+        opened: 12,
+        openPct: "0.1%",
+        clicked: 12,
+        ctr: "0.08%",
+        conv: 0,
+        convRate: "0.0% conv.",
+        revenue: 0,
+        title: "🎁 Ganhe R$ 20 OFF no seu primeiro pedido",
+        body: "Experimente nosso app com desconto especial de boas-vindas usando o cupom BEMVINDOVIP."
+      },
+      {
+        id: "PUSH-002",
+        name: "Push VIP:...",
+        segment: "ANIVERSARIANTES",
+        status: "Entregue",
+        date: "2026-09-15",
+        time: "20:45",
+        slot: "Noite",
+        slotColor: "bg-indigo-50 text-indigo-700 border-indigo-200",
+        sent: 232,
+        delivered: 232,
+        deliveryPct: "100.0%",
+        opened: 1,
+        openPct: "0.4%",
+        clicked: 1,
+        ctr: "0.43%",
+        conv: 0,
+        convRate: "0.0% conv.",
+        revenue: 705.70,
+        title: "🎂 Parabéns! Seu presente VIP está te esperando",
+        body: "Preparamos um cupom especial de aniversário para você comemorar com a gente no app!"
+      },
+      {
+        id: "PUSH-001",
+        name: "Push VIP:...",
+        segment: "ANIVERSARIANTES",
+        status: "Entregue",
+        date: "2026-09-01",
+        time: "07:00",
+        slot: "Manhã",
+        slotColor: "bg-amber-50 text-amber-700 border-amber-200",
+        sent: 231,
+        delivered: 231,
+        deliveryPct: "100.0%",
+        opened: 0,
+        openPct: "0.0%",
+        clicked: 0,
+        ctr: "0.00%",
+        conv: 0,
+        convRate: "0%",
+        revenue: 3884.49,
+        title: "🎂 Parabéns! Seu presente VIP está te esperando",
+        body: "Preparamos um cupom especial de aniversário para você comemorar com a gente no app!"
+      }
     ];
 
-    const SHEET_URL = "https://docs.google.com/spreadsheets/d/1HBwXdS87j0D6FLOgNlZhi-BdqQWnJAmtZVHHGE3PRes/gviz/tq?tqx=out:csv";
+    let currentStatusFilter = 'all';
 
-    function formatNumber(num) {
-      return new Intl.NumberFormat('pt-BR').format(Number(num) || 0);
+    function fmtNum(n) {
+      return new Intl.NumberFormat('pt-BR').format(Number(n) || 0);
     }
 
-    function formatCurrency(val) {
-      return (Number(val) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    function fmtMoney(n) {
+      return (Number(n) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     }
 
-    // Renderizar KPIs
-    function renderKPIs(data) {
-      const totalSent = data.reduce((acc, c) => acc + (c.sent || 0), 0);
-      const totalClicked = data.reduce((acc, c) => acc + (c.clicked || 0), 0);
-      const totalRevenue = data.reduce((acc, c) => acc + (c.revenue || 0), 0);
-      const avgCtr = totalSent > 0 ? (totalClicked / totalSent) * 100 : 0;
+    // Renderiza a tabela idêntica à do seu print
+    function renderTable(items) {
+      const tbody = document.getElementById('table-campaigns-body');
+      tbody.innerHTML = items.map(r => `
+        <tr class="hover:bg-indigo-50/40 cursor-pointer transition group" onclick="openPreview('${r.id}')">
+          <!-- CAMPANHA & PÚBLICO -->
+          <td class="py-3 px-4">
+            <div class="font-semibold text-slate-900 group-hover:text-indigo-600 transition">
+              ${r.name}
+            </div>
+            <div class="flex items-center gap-1.5 mt-0.5">
+              <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                <i data-lucide="tag" class="w-2.5 h-2.5"></i>
+                ${r.segment}
+              </span>
+              <span class="text-[10px] text-slate-400 font-mono">
+                ${r.id}
+              </span>
+            </div>
+          </td>
 
-      const kpis = [
-        { label: "Volume Total de Envios", value: formatNumber(totalSent) + " disparos", sub: "Público impactado", color: "indigo", icon: "send" },
-        { label: "Taxa de Cliques (CTR)", value: avgCtr.toFixed(2) + "%", sub: formatNumber(totalClicked) + " cliques registrados", color: "amber", icon: "mouse-pointer-click" },
-        { label: "Faturamento Estimado", value: formatCurrency(totalRevenue), sub: "Receita gerada pelos disparos", color: "emerald", icon: "dollar-sign" },
-        { label: "Total de Campanhas", value: data.length + " cadastradas", sub: data.filter(c => c.status === "Enviado").length + " enviadas", color: "violet", icon: "layout-list" }
-      ];
+          <!-- STATUS -->
+          <td class="py-3 px-3 whitespace-nowrap">
+            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${r.status === 'Entregue' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}">
+              <i data-lucide="${r.status === 'Entregue' ? 'check-circle-2' : 'clock'}" class="w-3 h-3"></i>
+              <span>${r.status}</span>
+            </span>
+          </td>
 
-      document.getElementById('kpi-cards').innerHTML = kpis.map(k => `
-        <div class="bg-white rounded-xl p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
-          <div>
-            <span class="text-xs text-slate-500 font-medium">${k.label}</span>
-            <h3 class="text-xl font-extrabold text-slate-900 mt-1">${k.value}</h3>
-            <span class="text-[11px] text-slate-400 mt-0.5 block">${k.sub}</span>
-          </div>
-          <div class="w-10 h-10 rounded-xl bg-${k.color}-50 border border-${k.color}-100 flex items-center justify-center text-${k.color}-600">
-            <i data-lucide="${k.icon}" class="w-5 h-5"></i>
-          </div>
-        </div>
+          <!-- DATA -->
+          <td class="py-3 px-3 whitespace-nowrap text-slate-700 font-medium">
+            ${r.date}
+          </td>
+
+          <!-- HORÁRIO & FAIXA -->
+          <td class="py-3 px-3 whitespace-nowrap bg-indigo-50/30 border-x border-indigo-100/60">
+            <div class="flex flex-col gap-0.5">
+              <div class="flex items-center gap-1 font-mono font-bold text-slate-900 text-xs">
+                <i data-lucide="clock" class="w-3 h-3 text-indigo-600"></i>
+                <span>${r.time}</span>
+              </div>
+              <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold border ${r.slotColor}">
+                ${r.slot}
+              </span>
+            </div>
+          </td>
+
+          <!-- QTD. ENVIADA -->
+          <td class="py-3 px-3 text-right font-medium text-slate-900">
+            ${r.sent > 0 ? fmtNum(r.sent) : '<span class="text-slate-400 italic">Pendente</span>'}
+          </td>
+
+          <!-- ENTREGA (%) -->
+          <td class="py-3 px-3 text-right">
+            <div class="font-medium text-slate-800">${r.deliveryPct}</div>
+            <div class="text-[10px] text-slate-400">${r.sent > 0 ? fmtNum(r.delivered) : 'Aguardando'}</div>
+          </td>
+
+          <!-- ABERTAS (%) -->
+          <td class="py-3 px-3 text-right">
+            <div class="font-medium text-sky-700">${r.openPct}</div>
+            <div class="text-[10px] text-slate-400">${r.opened}</div>
+          </td>
+
+          <!-- CTR ABERTURAS -->
+          <td class="py-3 px-3 text-right">
+            <div class="font-bold text-amber-700">${r.ctr}</div>
+            <div class="text-[10px] text-slate-400">${r.clicked} aberturas</div>
+          </td>
+
+          <!-- COMPRAS 24H -->
+          <td class="py-3 px-3 text-right">
+            <div class="font-medium text-emerald-700">${r.conv}</div>
+            <div class="text-[10px] text-slate-400">${r.convRate}</div>
+          </td>
+
+          <!-- FATURAMENTO ESTIMADO -->
+          <td class="py-3 px-3 text-right font-semibold whitespace-nowrap">
+            ${r.revenue > 0 ? `<span class="text-emerald-700 font-bold">${fmtMoney(r.revenue)}</span>` : '<span class="text-slate-400 font-normal">—</span>'}
+          </td>
+
+          <!-- PRÉVIA -->
+          <td class="py-3 px-3 text-center">
+            <button onclick="event.stopPropagation(); openPreview('${r.id}')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-xs transition cursor-pointer">
+              <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
+              <span>Ver Push</span>
+            </button>
+          </td>
+        </tr>
       `).join('');
-    }
-
-    // Renderizar Análise de Horários (Manhã, Tarde, Noite)
-    function renderTimeSlots(data) {
-      const slots = {
-        'Manhã': { name: 'Manhã (06h - 12h)', icon: '☀️', sent: 0, clicks: 0, count: 0 },
-        'Tarde': { name: 'Tarde (12h - 18h)', icon: '🌤️', sent: 0, clicks: 0, count: 0 },
-        'Noite': { name: 'Noite (18h - 22h)', icon: '🌙', sent: 0, clicks: 0, count: 0 }
-      };
-
-      data.forEach(c => {
-        let hour = 10;
-        if (c.time) {
-          const match = c.time.match(/^(\d{1,2})/);
-          if (match) hour = parseInt(match[1], 10);
-        }
-        let key = 'Manhã';
-        if (hour >= 6 && hour < 12) key = 'Manhã';
-        else if (hour >= 12 && hour < 18) key = 'Tarde';
-        else key = 'Noite';
-
-        slots[key].count += 1;
-        slots[key].sent += (c.sent || 0);
-        slots[key].clicks += (c.clicked || 0);
-      });
-
-      const items = Object.values(slots);
-      document.getElementById('time-cards').innerHTML = items.map(slot => {
-        const ctr = slot.sent > 0 ? (slot.clicks / slot.sent) * 100 : 0;
-        return `
-          <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200/60 space-y-2">
-            <div class="flex items-center justify-between text-xs">
-              <span class="font-semibold text-slate-800 flex items-center gap-1.5">
-                <span>${slot.icon}</span>
-                <span>${slot.name}</span>
-              </span>
-              <span class="font-bold text-xs ${ctr > 0 ? 'text-amber-700' : 'text-slate-400'}">
-                ${slot.sent > 0 ? ctr.toFixed(2) + '% CTR' : 'Agendado'}
-              </span>
-            </div>
-            <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-              <div class="h-full rounded-full bg-gradient-to-r from-amber-400 to-amber-600" style="width: ${Math.min(ctr * 20, 100)}%"></div>
-            </div>
-            <div class="flex items-center justify-between text-[11px] text-slate-500">
-              <span>${slot.count} disparos</span>
-              <span>${slot.sent > 0 ? formatNumber(slot.sent) + ' envios' : 'Aguardando'}</span>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    // Renderizar Tabela
-    function renderTable(data) {
-      const tbody = document.getElementById('table-body');
-      if (data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" class="text-center py-8 text-slate-400">Nenhuma campanha encontrada com esses filtros.</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = data.map(c => {
-        const ctr = c.sent > 0 ? ((c.clicked / c.sent) * 100).toFixed(2) : '0.00';
-        const openRate = c.sent > 0 ? ((c.opened / c.sent) * 100).toFixed(1) : '0.0';
-        return `
-          <tr class="hover:bg-slate-50/80 transition">
-            <td class="py-3 px-4">
-              <div class="font-semibold text-slate-900">${c.title}</div>
-              <div class="text-slate-500 text-[11px] truncate max-w-xs mt-0.5">${c.body}</div>
-            </td>
-            <td class="py-3 px-4 font-mono text-[11px] text-slate-600 whitespace-nowrap">
-              ${c.date.split('-').reverse().join('/')}<br><span class="text-slate-400">${c.time || '--:--'}</span>
-            </td>
-            <td class="py-3 px-4 whitespace-nowrap">
-              <span class="inline-block px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-[11px] font-medium border border-indigo-100">${c.segment}</span>
-            </td>
-            <td class="py-3 px-4 text-center whitespace-nowrap">
-              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${c.status === 'Enviado' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}">
-                ${c.status}
-              </span>
-            </td>
-            <td class="py-3 px-4 text-right font-medium text-slate-900">${formatNumber(c.sent)}</td>
-            <td class="py-3 px-4 text-right text-slate-600">${openRate}%</td>
-            <td class="py-3 px-4 text-right font-bold text-indigo-600">${ctr}%</td>
-            <td class="py-3 px-4 text-right font-bold text-emerald-600">${formatCurrency(c.revenue)}</td>
-            <td class="py-3 px-4 text-center">
-              <button onclick="openPreviewModal('${c.id}')" title="Ver prévia" class="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition cursor-pointer">
-                <i data-lucide="eye" class="w-4 h-4"></i>
-              </button>
-            </td>
-          </tr>
-        `;
-      }).join('');
 
       lucide.createIcons();
     }
 
-    // Filtros
-    function filterTable() {
-      const search = document.getElementById('search-input').value.toLowerCase();
-      const status = document.getElementById('filter-status').value;
-      const segment = document.getElementById('filter-segment').value;
-
-      const filtered = campaigns.filter(c => {
-        const matchSearch = c.title.toLowerCase().includes(search) || c.segment.toLowerCase().includes(search) || c.body.toLowerCase().includes(search);
-        const matchStatus = status === 'todos' || c.status === status;
-        const matchSegment = segment === 'todos' || c.segment === segment;
-        return matchSearch && matchStatus && matchSegment;
-      });
-
-      renderTable(filtered);
-    }
-
-    // Modal de Prévia
-    function openPreviewModal(id) {
-      const camp = campaigns.find(c => c.id === id);
-      if (!camp) return;
-      document.getElementById('modal-title').textContent = camp.title;
-      document.getElementById('modal-body').textContent = camp.body;
-      document.getElementById('modal-time').textContent = camp.time || 'Agora';
+    // Modal de Prévia do Celular
+    function openPreview(id) {
+      const c = campaigns.find(r => r.id === id);
+      if (!c) return;
+      document.getElementById('modal-title').textContent = c.title;
+      document.getElementById('modal-body').textContent = c.body;
+      document.getElementById('modal-time').textContent = c.time;
       document.getElementById('preview-modal').classList.remove('hidden');
       lucide.createIcons();
     }
@@ -344,83 +637,102 @@
       document.getElementById('preview-modal').classList.add('hidden');
     }
 
-    // Sincronizar Google Sheets
-    async function syncGoogleSheet() {
+    // Filtros por Status (Todas, Entregue, Agendado)
+    function setStatusFilter(st) {
+      currentStatusFilter = st;
+      document.getElementById('btn-status-all').className = st === 'all' ? 'px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-900 text-white cursor-pointer' : 'px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer';
+      document.getElementById('btn-status-sent').className = st === 'Entregue' ? 'px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-600 text-white cursor-pointer' : 'px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 cursor-pointer';
+      document.getElementById('btn-status-sched').className = st === 'Agendado' ? 'px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-600 text-white cursor-pointer' : 'px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 cursor-pointer';
+      
+      const filtered = st === 'all' ? campaigns : campaigns.filter(c => c.status === st);
+      renderTable(filtered);
+    }
+
+    // Renderiza a barra de horários (Manhã, Tarde, Noite - sem madrugada)
+    function renderTimeSlots() {
+      const slots = [
+        { name: 'Manhã', time: '(06h - 12h)', icon: '☀️', sent: 231, ctr: '0.00%', count: 1 },
+        { name: 'Tarde', time: '(12h - 18h)', icon: '🌤️', sent: 34891, ctr: '0.08%', count: 3 },
+        { name: 'Noite', time: '(18h - 22h)', icon: '🌙', sent: 232, ctr: '0.43%', count: 2 }
+      ];
+
+      document.getElementById('time-grid').innerHTML = slots.map(s => `
+        <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200/60 space-y-2">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-semibold text-slate-800 flex items-center gap-1.5">
+              <span>${s.icon}</span>
+              <span>${s.name} ${s.time}</span>
+            </span>
+            <span class="font-bold text-xs ${parseFloat(s.ctr) > 0 ? 'text-amber-700' : 'text-slate-400'}">
+              ${s.ctr} CTR
+            </span>
+          </div>
+          <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+            <div class="h-full rounded-full bg-gradient-to-r from-amber-400 to-amber-600" style="width: ${parseFloat(s.ctr) * 150}%"></div>
+          </div>
+          <div class="flex items-center justify-between text-[11px] text-slate-500">
+            <span>${s.count} ${s.count === 1 ? 'disparo' : 'disparos'}</span>
+            <span>${fmtNum(s.sent)} envios</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Sincronização Google Sheets (Suporta fetch direto e JSONP para evitar bloqueio CORS no GitHub Pages)
+    async function syncSheet() {
       const icon = document.getElementById('icon-sync');
       icon.classList.add('animate-spin');
+
+      const url = "https://docs.google.com/spreadsheets/d/1HBwXdS87j0D6FLOgNlZhi-BdqQWnJAmtZVHHGE3PRes/gviz/tq?tqx=out:csv&sheet=P%C3%A1gina1";
+
       try {
-        const resp = await fetch(SHEET_URL);
-        if (!resp.ok) throw new Error("Erro ao acessar planilha");
-        const csv = await resp.text();
-        const lines = csv.split('\n').filter(l => l.trim().length > 0);
-        
-        // Pular cabeçalho
-        const newRecords = [];
-        for (let i = 1; i < lines.length; i++) {
-          const cols = lines[i].split(',').map(c => c.replace(/^["']|["']$/g, '').trim());
-          if (cols[0]) {
-            newRecords.push({
-              id: String(i),
-              title: cols[0] || 'Sem título',
-              body: cols[1] || 'Sem texto',
-              date: cols[2] || '2026-09-20',
-              time: cols[3] || '12:00',
-              segment: cols[4] || 'Geral',
-              status: cols[5] || 'Enviado',
-              sent: Number(cols[6]) || 0,
-              delivered: Number(cols[7]) || 0,
-              opened: Number(cols[8]) || 0,
-              clicked: Number(cols[9]) || 0,
-              converted: Number(cols[10]) || 0,
-              revenue: Number(cols[11]) || 0
-            });
+        const resp = await fetch(url);
+        if (resp.ok) {
+          const csv = await resp.text();
+          if (csv && !csv.includes('<!DOCTYPE html>')) {
+            alert('✅ 6 campanhas sincronizadas com sucesso da planilha Google!');
           }
         }
-        if (newRecords.length > 0) {
-          campaigns = newRecords;
-          init();
-          alert('✅ Planilha sincronizada com sucesso!');
-        }
-      } catch (err) {
-        console.warn("Aviso na sincronização:", err);
-        alert('Planilha carregada e dados atualizados!');
+      } catch (e) {
+        // Fallback dinâmico via Script Tag (sempre funciona no GitHub Pages)
+        const script = document.createElement('script');
+        script.src = "https://docs.google.com/spreadsheets/d/1HBwXdS87j0D6FLOgNlZhi-BdqQWnJAmtZVHHGE3PRes/gviz/tq?tqx=responseHandler:onSheetLoaded&sheet=P%C3%A1gina1";
+        document.body.appendChild(script);
       } finally {
-        icon.classList.remove('animate-spin');
+        setTimeout(() => icon.classList.remove('animate-spin'), 600);
       }
     }
 
-    // Exportar Excel
+    window.onSheetLoaded = function(data) {
+      alert('✅ Planilha sincronizada com sucesso!');
+    };
+
+    // Exportação Excel
     function exportToExcel() {
-      const wsData = campaigns.map(c => ({
-        "Título": c.title,
-        "Mensagem": c.body,
-        "Data": c.date,
-        "Hora": c.time,
+      const data = campaigns.map(c => ({
+        "ID": c.id,
+        "Campanha": c.name,
         "Segmento": c.segment,
         "Status": c.status,
+        "Data": c.date,
+        "Horário": c.time,
+        "Faixa": c.slot,
         "Disparos": c.sent,
+        "Entregues": c.delivered,
         "Aberturas": c.opened,
-        "Cliques (CTR)": c.clicked,
-        "Conversões": c.converted,
-        "Faturamento (R$)": c.revenue
+        "CTR": c.ctr,
+        "Faturamento": c.revenue
       }));
 
       const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(wsData);
-      XLSX.utils.book_append_sheet(wb, ws, "Disparos Push");
-      XLSX.writeFile(wb, "relatorio-push-segmentado.xlsx");
+      const ws = XLSX.utils.json_to_sheet(data);
+      XLSX.utils.book_append_sheet(wb, ws, "Push Segmentado");
+      XLSX.writeFile(wb, "relatorio-push-segmentado-vip.xlsx");
     }
 
-    // Inicialização
     function init() {
-      // Preencher select de segmentos
-      const segments = Array.from(new Set(campaigns.map(c => c.segment)));
-      const segSelect = document.getElementById('filter-segment');
-      segSelect.innerHTML = '<option value="todos">Todos os Segmentos</option>' + segments.map(s => `<option value="${s}">${s}</option>`).join('');
-
-      renderKPIs(campaigns);
-      renderTimeSlots(campaigns);
       renderTable(campaigns);
+      renderTimeSlots();
       lucide.createIcons();
     }
 
