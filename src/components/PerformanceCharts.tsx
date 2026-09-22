@@ -40,23 +40,19 @@ export const PerformanceCharts: React.FC<PerformanceChartsProps> = ({
       percent: totalVolumeSent > 0 ? (s.sent / totalVolumeSent) * 100 : 0,
     }));
 
-  // 3. Time of Day Performance
+  // 3. Time of Day Performance (sem madrugada)
   const timeBuckets: Record<string, { bucket: string; icon: string; count: number; sent: number; delivered: number; opened: number; clicked: number }> = {
     'Manhã (06h - 12h)': { bucket: 'Manhã (06h - 12h)', icon: '☀️', count: 0, sent: 0, delivered: 0, opened: 0, clicked: 0 },
-    'Almoço (12h - 14h)': { bucket: 'Almoço (12h - 14h)', icon: '🍽️', count: 0, sent: 0, delivered: 0, opened: 0, clicked: 0 },
-    'Tarde (14h - 18h)': { bucket: 'Tarde (14h - 18h)', icon: '🌤️', count: 0, sent: 0, delivered: 0, opened: 0, clicked: 0 },
+    'Tarde (12h - 18h)': { bucket: 'Tarde (12h - 18h)', icon: '🌤️', count: 0, sent: 0, delivered: 0, opened: 0, clicked: 0 },
     'Noite (18h - 22h)': { bucket: 'Noite (18h - 22h)', icon: '🌙', count: 0, sent: 0, delivered: 0, opened: 0, clicked: 0 },
-    'Madrugada (22h - 06h)': { bucket: 'Madrugada (22h - 06h)', icon: '⭐', count: 0, sent: 0, delivered: 0, opened: 0, clicked: 0 },
   };
 
   records.forEach((r) => {
     const hour = parseInt(r.time?.split(':')[0] || '10', 10);
     let key = 'Manhã (06h - 12h)';
     if (hour >= 6 && hour < 12) key = 'Manhã (06h - 12h)';
-    else if (hour >= 12 && hour < 14) key = 'Almoço (12h - 14h)';
-    else if (hour >= 14 && hour < 18) key = 'Tarde (14h - 18h)';
-    else if (hour >= 18 && hour < 22) key = 'Noite (18h - 22h)';
-    else key = 'Madrugada (22h - 06h)';
+    else if (hour >= 12 && hour < 18) key = 'Tarde (12h - 18h)';
+    else key = 'Noite (18h - 22h)';
 
     timeBuckets[key].count += 1;
     timeBuckets[key].sent += r.sent;
@@ -239,7 +235,7 @@ export const PerformanceCharts: React.FC<PerformanceChartsProps> = ({
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 my-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 my-3">
           {timeData.map((item) => {
             const widthPct = item.ctr > 0 ? Math.max((item.ctr / maxCtr) * 100, 10) : item.count > 0 ? 5 : 0;
             return (
