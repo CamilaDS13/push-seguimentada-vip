@@ -1,0 +1,6 @@
+{
+  "name": "Painel de Push Segmentado",
+  "description": "Painel analítico e interativo de disparo de push notifications segmentados com sincronização da planilha Google e exportação para Excel.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
